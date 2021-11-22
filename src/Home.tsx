@@ -17,6 +17,7 @@ import {
   getCandyMachineState,
   mintOneToken,
   shortenAddress,
+  CandyMachineState,
 } from "./candy-machine";
 
 const ConnectButton = styled(WalletDialogButton)``;
@@ -46,6 +47,8 @@ const Home = (props: HomeProps) => {
   const [itemsRedeemed, setItemsRedeemed] = useState(0);
   const [itemsRemaining, setItemsRemaining] = useState(0);
 
+  const [tokens, setTokens] = useState<CandyMachineState["tokens"]>();
+
   const [alertState, setAlertState] = useState<AlertState>({
     open: false,
     message: "",
@@ -61,17 +64,20 @@ const Home = (props: HomeProps) => {
     (async () => {
       if (!wallet) return;
 
+      const state = await getCandyMachineState(
+        wallet as anchor.Wallet,
+        props.candyMachineId,
+        props.connection
+      );
+
       const {
         candyMachine,
         goLiveDate,
         itemsAvailable,
         itemsRemaining,
         itemsRedeemed,
-      } = await getCandyMachineState(
-        wallet as anchor.Wallet,
-        props.candyMachineId,
-        props.connection
-      );
+        tokens,
+      } = state;
 
       setItemsAvailable(itemsAvailable);
       setItemsRemaining(itemsRemaining);
@@ -80,18 +86,20 @@ const Home = (props: HomeProps) => {
       setIsSoldOut(itemsRemaining === 0);
       setStartDate(goLiveDate);
       setCandyMachine(candyMachine);
+      setTokens(tokens);
     })();
   };
 
   const onMint = async () => {
     try {
       setIsMinting(true);
-      if (wallet && candyMachine?.program) {
+      if (wallet && candyMachine?.program && tokens) {
+        debugger;
         const mintTxId = await mintOneToken(
           candyMachine,
           props.config,
           wallet.publicKey,
-          props.treasury
+          tokens
         );
 
         const status = await awaitTransactionSignatureConfirmation(
