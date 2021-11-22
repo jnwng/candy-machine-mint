@@ -94,7 +94,6 @@ const Home = (props: HomeProps) => {
     try {
       setIsMinting(true);
       if (wallet && candyMachine?.program && tokens) {
-        debugger;
         const mintTxId = await mintOneToken(
           candyMachine,
           props.config,
